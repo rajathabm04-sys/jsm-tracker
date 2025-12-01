@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSM Implementation Project Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div id="app" class="min-h-screen p-6">
+        <div class="max-w-7xl mx-auto">
+            <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+                <h1 class="text-3xl font-bold text-gray-900 mb-2">JSM Implementation Project Tracker</h1>
+                <p class="text-gray-600 mb-6">RBIH Support Revamp - Track implementation progress across all phases</p>
+                
+                <!-- Overall Stats -->
+                <div id="overall-stats" class="grid grid-cols-5 gap-4 mb-6"></div>
+
+                <!-- Progress Bar -->
+                <div class="mb-6">
+                    <div class="flex justify-between text-sm text-gray-600 mb-2">
+                        <span>Overall Progress</span>
+                        <span id="overall-percentage">0%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-3">
+                        <div id="progress-bar" class="bg-green-600 h-3 rounded-full transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Phase-wise Task List -->
+            <div id="phases-container"></div>
+
+            <div class="bg-blue-50 border-l-4 border-blue-600 p-4 rounded">
+                <p class="text-sm text-blue-800">
+                    <strong>💡 Tip:</strong> Click on any status badge to cycle through: Not Started → In Progress → Completed → Blocked
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Task data
+        let tasks = [
+            // Phase 1: Foundation & Setup
+            { phase: 'Phase 1: Foundation & Setup', name: 'JSM License Procurement', owner: 'IT/Procurement', status: 'Not Started', duration: '1 week', dependencies: 'None', priority: 'High' },
+            { phase: 'Phase 1: Foundation & Setup', name: 'JSM Instance Setup & Configuration', owner: 'IT Admin', status: 'Not Started', duration: '3 days', dependencies: 'JSM License', priority: 'High' },
+            { phase: 'Phase 1: Foundation & Setup', name: 'Email Integration (support@rbihub.in)', owner: 'IT Admin', status: 'Not Started', duration: '2 days', dependencies: 'JSM Setup', priority: 'High' },
+            { phase: 'Phase 1: Foundation & Setup', name: 'Define Ticket Fields & Categories', owner: 'Support Lead', status: 'Not Started', duration: '3 days', dependencies: 'None', priority: 'High' },
+            
+            // Phase 2: Workflows & Automation
+            { phase: 'Phase 2: Workflows & Automation', name: 'Configure Auto-Classification Rules', owner: 'Support Lead', status: 'Not Started', duration: '1 week', dependencies: 'Ticket Fields', priority: 'High' },
+            { phase: 'Phase 2: Workflows & Automation', name: 'Setup L1/L2/L3 Routing Logic', owner: 'Support Lead', status: 'Not Started', duration: '4 days', dependencies: 'Auto-Classification', priority: 'High' },
+            { phase: 'Phase 2: Workflows & Automation', name: 'Configure SLA Rules (P0-P3)', owner: 'Support Lead', status: 'Not Started', duration: '3 days', dependencies: 'Routing Logic', priority: 'High' },
+            { phase: 'Phase 2: Workflows & Automation', name: 'Setup Ticket Lifecycle Automation', owner: 'IT Admin', status: 'Not Started', duration: '3 days', dependencies: 'SLA Rules', priority: 'Medium' },
+            { phase: 'Phase 2: Workflows & Automation', name: 'Configure Auto-Acknowledgment Emails', owner: 'IT Admin', status: 'Not Started', duration: '2 days', dependencies: 'Email Integration', priority: 'Medium' },
+            
+            // Phase 3: Slack Integration
+            { phase: 'Phase 3: Slack Integration', name: 'Setup Slack Channels (#support-alerts, #uli-incidents)', owner: 'IT Admin', status: 'Not Started', duration: '1 day', dependencies: 'None', priority: 'Medium' },
+            { phase: 'Phase 3: Slack Integration', name: 'Configure JSM-Slack Integration', owner: 'IT Admin', status: 'Not Started', duration: '2 days', dependencies: 'Slack Channels', priority: 'Medium' },
+            { phase: 'Phase 3: Slack Integration', name: 'Setup Alert Rules for P0/P1 Tickets', owner: 'Support Lead', status: 'Not Started', duration: '2 days', dependencies: 'JSM-Slack Integration', priority: 'Medium' },
+            { phase: 'Phase 3: Slack Integration', name: 'Configure Slash Commands (/jira create)', owner: 'IT Admin', status: 'Not Started', duration: '1 day', dependencies: 'JSM-Slack Integration', priority: 'Low' },
+            
+            // Phase 4: Knowledge Base (L0)
+            { phase: 'Phase 4: Knowledge Base (L0)', name: 'Create KB Structure in JSM', owner: 'Support Lead', status: 'Not Started', duration: '2 days', dependencies: 'JSM Setup', priority: 'Medium' },
+            { phase: 'Phase 4: Knowledge Base (L0)', name: 'Migrate Existing Documentation to KB', owner: 'Support Team', status: 'Not Started', duration: '1 week', dependencies: 'KB Structure', priority: 'Medium' },
+            { phase: 'Phase 4: Knowledge Base (L0)', name: 'Create ULI Getting Started Guides', owner: 'Support Team', status: 'Not Started', duration: '1 week', dependencies: 'KB Structure', priority: 'Medium' },
+            { phase: 'Phase 4: Knowledge Base (L0)', name: 'Document Common Error Codes & Solutions', owner: 'Technical Support', status: 'Not Started', duration: '1 week', dependencies: 'KB Structure', priority: 'Medium' },
+            
+            // Phase 5: Dashboards & Reporting
+            { phase: 'Phase 5: Dashboards & Reporting', name: 'Create Operational Metrics Dashboard', owner: 'Support Lead', status: 'Not Started', duration: '3 days', dependencies: 'Ticket Fields', priority: 'Medium' },
+            { phase: 'Phase 5: Dashboards & Reporting', name: 'Create Performance Metrics Dashboard', owner: 'Support Lead', status: 'Not Started', duration: '3 days', dependencies: 'SLA Rules', priority: 'Medium' },
+            { phase: 'Phase 5: Dashboards & Reporting', name: 'Setup SLA Breach Alerts', owner: 'IT Admin', status: 'Not Started', duration: '2 days', dependencies: 'Performance Dashboard', priority: 'High' },
+            { phase: 'Phase 5: Dashboards & Reporting', name: 'Configure CSAT Survey Automation', owner: 'Support Lead', status: 'Not Started', duration: '2 days', dependencies: 'Ticket Lifecycle', priority: 'Low' },
+            
+            // Phase 6: Team Training
+            { phase: 'Phase 6: Team Training', name: 'L1 Support Team Training', owner: 'Support Lead', status: 'Not Started', duration: '2 days', dependencies: 'All Workflows', priority: 'High' },
+            { phase: 'Phase 6: Team Training', name: 'L2 Technical Support Training', owner: 'Support Lead', status: 'Not Started', duration: '2 days', dependencies: 'All Workflows', priority: 'High' },
+            { phase: 'Phase 6: Team Training', name: 'Engineering/Product Team Onboarding', owner: 'Support Lead', status: 'Not Started', duration: '1 day', dependencies: 'All Workflows', priority: 'Medium' },
+            { phase: 'Phase 6: Team Training', name: 'Create Internal Playbooks & SOPs', owner: 'Support Lead', status: 'Not Started', duration: '1 week', dependencies: 'Team Training', priority: 'Medium' },
+            
+            // Phase 7: Testing & Go-Live
+            { phase: 'Phase 7: Testing & Go-Live', name: 'Internal Testing with Test Emails', owner: 'Support Team', status: 'Not Started', duration: '3 days', dependencies: 'Team Training', priority: 'High' },
+            { phase: 'Phase 7: Testing & Go-Live', name: 'Pilot with 2-3 Partners', owner: 'Support Lead', status: 'Not Started', duration: '1 week', dependencies: 'Internal Testing', priority: 'High' },
+            { phase: 'Phase 7: Testing & Go-Live', name: 'Bug Fixes & Refinements', owner: 'IT Admin', status: 'Not Started', duration: '3 days', dependencies: 'Pilot', priority: 'High' },
+            { phase: 'Phase 7: Testing & Go-Live', name: 'Full Go-Live & Communication', owner: 'Support Lead', status: 'Not Started', duration: '1 day', dependencies: 'Bug Fixes', priority: 'High' },
+            { phase: 'Phase 7: Testing & Go-Live', name: 'Post Go-Live Monitoring (Week 1)', owner: 'Support Lead', status: 'Not Started', duration: '1 week', dependencies: 'Go-Live', priority: 'High' }
+        ];
+
+        // Load from localStorage if available
+        const savedTasks = localStorage.getItem('jsmTrackerTasks');
+        if (savedTasks) {
+            tasks = JSON.parse(savedTasks);
+        }
+
+        function saveTasks() {
+            localStorage.setItem('jsmTrackerTasks', JSON.stringify(tasks));
+        }
+
+        function toggleStatus(index) {
+            const statuses = ['Not Started', 'In Progress', 'Completed', 'Blocked'];
+            const currentIndex = statuses.indexOf(tasks[index].status);
+            tasks[index].status = statuses[(currentIndex + 1) % statuses.length];
+            saveTasks();
+            render();
+        }
+
+        function getStatusIcon(status) {
+            const icons = {
+                'Completed': '✓',
+                'In Progress': '⟳',
+                'Blocked': '✕',
+                'Not Started': '○'
+            };
+            return icons[status] || '○';
+        }
+
+        function getStatusColor(status) {
+            const colors = {
+                'Completed': 'bg-green-100 text-green-800 border-green-300',
+                'In Progress': 'bg-blue-100 text-blue-800 border-blue-300',
+                'Blocked': 'bg-red-100 text-red-800 border-red-300',
+                'Not Started': 'bg-gray-100 text-gray-800 border-gray-300'
+            };
+            return colors[status] || 'bg-gray-100 text-gray-800 border-gray-300';
+        }
+
+        function getPriorityColor(priority) {
+            const colors = {
+                'High': 'bg-red-50 text-red-700 border-red-200',
+                'Medium': 'bg-yellow-50 text-yellow-700 border-yellow-200',
+                'Low': 'bg-gray-50 text-gray-700 border-gray-200'
+            };
+            return colors[priority] || 'bg-gray-50 text-gray-700 border-gray-200';
+        }
+
+        function render() {
+            const overallStats = {
+                total: tasks.length,
+                completed: tasks.filter(t => t.status === 'Completed').length,
+                inProgress: tasks.filter(t => t.status === 'In Progress').length,
+                blocked: tasks.filter(t => t.status === 'Blocked').length,
+                notStarted: tasks.filter(t => t.status === 'Not Started').length
+            };
+
+            const percentage = Math.round((overallStats.completed / overallStats.total) * 100);
+
+            // Update overall stats
+            document.getElementById('overall-stats').innerHTML = `
+                <div class="bg-gray-50 rounded-lg p-4 border-2 border-gray-200">
+                    <div class="text-2xl font-bold text-gray-900">${overallStats.total}</div>
+                    <div class="text-sm text-gray-600">Total Tasks</div>
+                </div>
+                <div class="bg-green-50 rounded-lg p-4 border-2 border-green-200">
+                    <div class="text-2xl font-bold text-green-700">${overallStats.completed}</div>
+                    <div class="text-sm text-green-600">Completed</div>
+                </div>
+                <div class="bg-blue-50 rounded-lg p-4 border-2 border-blue-200">
+                    <div class="text-2xl font-bold text-blue-700">${overallStats.inProgress}</div>
+                    <div class="text-sm text-blue-600">In Progress</div>
+                </div>
+                <div class="bg-red-50 rounded-lg p-4 border-2 border-red-200">
+                    <div class="text-2xl font-bold text-red-700">${overallStats.blocked}</div>
+                    <div class="text-sm text-red-600">Blocked</div>
+                </div>
+                <div class="bg-gray-50 rounded-lg p-4 border-2 border-gray-200">
+                    <div class="text-2xl font-bold text-gray-700">${overallStats.notStarted}</div>
+                    <div class="text-sm text-gray-600">Not Started</div>
+                </div>
+            `;
+
+            document.getElementById('overall-percentage').textContent = `${percentage}%`;
+            document.getElementById('progress-bar').style.width = `${percentage}%`;
+
+            // Get unique phases
+            const phases = [...new Set(tasks.map(t => t.phase))];
+
+            // Render phases
+            const phasesContainer = document.getElementById('phases-container');
+            phasesContainer.innerHTML = phases.map(phase => {
+                const phaseTasks = tasks.filter(t => t.phase === phase);
+                const phaseCompleted = phaseTasks.filter(t => t.status === 'Completed').length;
+                const phaseTotal = phaseTasks.length;
+                const phasePercentage = Math.round((phaseCompleted / phaseTotal) * 100);
+
+                return `
+                    <div class="bg-white rounded-lg shadow-lg mb-6 overflow-hidden">
+                        <div class="bg-gradient-to-r from-blue-600 to-blue-700 p-4">
+                            <div class="flex justify-between items-center">
+                                <h2 class="text-xl font-bold text-white">${phase}</h2>
+                                <div class="text-white text-sm">
+                                    ${phaseCompleted}/${phaseTotal} tasks (${phasePercentage}%)
+                                </div>
+                            </div>
+                            <div class="mt-2 w-full bg-blue-800 rounded-full h-2">
+                                <div class="bg-white h-2 rounded-full transition-all duration-300" style="width: ${phasePercentage}%"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead class="bg-gray-50 border-b-2 border-gray-200">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Status</th>
+                                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Task Name</th>
+                                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Owner</th>
+                                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Duration</th>
+                                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Dependencies</th>
+                                        <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">Priority</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-200">
+                                    ${phaseTasks.map((task, taskIndex) => {
+                                        const actualIndex = tasks.indexOf(task);
+                                        return `
+                                            <tr class="hover:bg-gray-50 transition-colors">
+                                                <td class="px-6 py-4">
+                                                    <button
+                                                        onclick="toggleStatus(${actualIndex})"
+                                                        class="flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-medium ${getStatusColor(task.status)} cursor-pointer hover:opacity-80"
+                                                    >
+                                                        <span>${getStatusIcon(task.status)}</span>
+                                                        ${task.status}
+                                                    </button>
+                                                </td>
+                                                <td class="px-6 py-4">
+                                                    <div class="text-sm font-medium text-gray-900">${task.name}</div>
+                                                </td>
+                                                <td class="px-6 py-4">
+                                                    <div class="text-sm text-gray-600">${task.owner}</div>
+                                                </td>
+                                                <td class="px-6 py-4">
+                                                    <div class="text-sm text-gray-600">${task.duration}</div>
+                                                </td>
+                                                <td class="px-6 py-4">
+                                                    <div class="text-sm text-gray-600">${task.dependencies}</div>
+                                                </td>
+                                                <td class="px-6 py-4">
+                                                    <span class="px-2 py-1 rounded-full border text-xs font-medium ${getPriorityColor(task.priority)}">
+                                                        ${task.priority}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        `;
+                                    }).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Initial render
+        render();
+    </script>
+</body>
+</html>
